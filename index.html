@@ -125,15 +125,16 @@
       transition: transform 0.55s cubic-bezier(.5, 0, .2, 1);
       will-change: transform;
     }
-    /* globo inicial (wireframe) — aparece e depois vira o círculo laranja */
+    /* globo inicial (wireframe) — aparece, se desenha e gira; depois o laranja o preenche */
     .badge-globe {
       position: absolute; inset: 0; z-index: 2;
       display: flex; align-items: center; justify-content: center;
-      opacity: 0; transform: scale(0.7);
-      transition: opacity 0.55s ease, transform 0.6s cubic-bezier(.2, .8, .2, 1);
+      opacity: 0; transform: scale(0.86);
+      transition: opacity 0.6s ease, transform 0.7s cubic-bezier(.2, .8, .2, 1);
       pointer-events: none;
     }
-    .badge-globe svg { width: 100%; height: 100%; display: block; }
+    .badge-globe svg { width: 100%; height: 100%; display: block; overflow: visible; }
+    .badge-globe .gdraw { stroke-dasharray: 400; }
     .badge-globe .gspin { transform-box: fill-box; transform-origin: center; }
     .badge {
       position: relative; overflow: hidden;
@@ -141,25 +142,21 @@
       width: clamp(136px, 42vw, 232px);
       height: clamp(136px, 42vw, 232px);
       display: flex; align-items: center; justify-content: center;
-      border-radius: 50%;                 /* começa como círculo */
-      opacity: 0; transform: scale(0.7);  /* escondido até o globo virar círculo */
+      border-radius: 50%;               /* começa como círculo */
+      opacity: 0; transform: scale(0);  /* o laranja cresce DO CENTRO, preenchendo o globo */
       transition: border-radius 0.55s cubic-bezier(.5, 0, .2, 1),
-                  opacity 0.5s ease, transform 0.5s cubic-bezier(.2, .8, .2, 1);
+                  opacity 0.4s ease, transform 0.7s cubic-bezier(.3, .9, .3, 1);
     }
     .badge .wordmark {
       width: 71%; height: auto; display: block; position: relative; z-index: 1;
       transform-origin: center; opacity: 0;
       transition: transform 0.55s cubic-bezier(.5, 0, .2, 1), opacity 0.5s ease;
     }
-    /* eco/pulso: contornos finos ancorados ao centro do quadrado */
-    .pulse {
-      position: absolute; inset: 0; z-index: 0; pointer-events: none;
+    /* halo laranja que "respira" (pulso suave) ao redor do quadrado */
+    .halo {
+      position: absolute; inset: -18%; z-index: 0; pointer-events: none;
+      background: radial-gradient(circle, rgba(250,76,0,0.38) 0%, rgba(250,76,0,0.14) 46%, transparent 70%);
       opacity: 0;
-    }
-    .pulse span {
-      position: absolute; inset: 0;
-      border: 1px solid var(--orange);
-      border-radius: 1px; opacity: 0;
     }
     .wordmark text { font-family: 'Druk Wide', sans-serif; }
     /* reflexo de luz que atravessa a logo */
@@ -225,14 +222,14 @@
       /* a entrada da logo (globo -> círculo -> MULT) é controlada via JS */
 
       /* contínuas — só depois que a logo assenta no quadrado */
-      body.ready .badge-glow { animation: float 6.5s ease-in-out infinite, glow 4.5s ease-in-out infinite; }
+      body.ready .badge-glow { animation: float 6.5s ease-in-out infinite; }
       body.ready .shine { animation: shine 6.5s ease-in-out infinite 1.4s; }
 
-      /* eco/pulso: anéis expandem em repetição; envelope = 3s fade-in + 3s normal + 3s fade-out */
-      body.ready .pulse { animation: pulseEnvelope 9s ease both; }
-      body.ready .pulse span { animation: echo 2.6s ease-out infinite; }
-      body.ready .pulse span:nth-child(2) { animation-delay: 0.87s; }
-      body.ready .pulse span:nth-child(3) { animation-delay: 1.74s; }
+      /* pulso = halo laranja que respira (entra e sai) ao redor do quadrado */
+      body.ready .halo { animation: haloPulse 3.6s ease-in-out infinite; }
+
+      /* globo se desenha na tela ao aparecer */
+      .badge-globe .gdraw { animation: draw 1.2s ease 0.2s both; }
 
       /* ambientes */
       .glow-bg { animation: breathe 7s ease-in-out infinite; }
@@ -266,17 +263,15 @@
     }
     @keyframes blink { 0%,50% { opacity: 1; } 50.01%,100% { opacity: 0; } }
     @keyframes globe { to { transform: rotate(360deg); } }
-    @keyframes echo {
-      0%   { transform: scale(1);   opacity: 0.5; }
-      70%  { opacity: 0.12; }
-      100% { transform: scale(1.5); opacity: 0; }
+    /* halo respira: pulso laranja suave que entra e sai */
+    @keyframes haloPulse {
+      0%, 100% { opacity: 0.40; transform: scale(0.90); }
+      50%      { opacity: 0.85; transform: scale(1.12); }
     }
-    /* envelope do pulso: 3s fade-in + 3s normal + 3s fade-out (9s, uma vez) */
-    @keyframes pulseEnvelope {
-      0%     { opacity: 0; }
-      33.33% { opacity: 1; }
-      66.66% { opacity: 1; }
-      100%   { opacity: 0; }
+    /* globo se desenha na tela (linhas traçando) */
+    @keyframes draw {
+      from { stroke-dashoffset: 400; }
+      to   { stroke-dashoffset: 0; }
     }
   </style>
 </head>
@@ -315,10 +310,10 @@
     <!-- Logo oficial: wordmark MULT. (Druk Wide Bold) branco sobre laranja -->
     <div class="badge-tilt">
       <div class="badge-glow">
-        <div class="pulse" aria-hidden="true"><span></span><span></span><span></span></div>
+        <div class="halo" aria-hidden="true"></div>
         <div class="badge-globe" aria-hidden="true">
           <svg viewBox="0 0 100 100">
-            <g fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round">
+            <g class="gdraw" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round">
               <circle cx="50" cy="50" r="49" />
               <g class="gspin">
                 <line x1="50" y1="1" x2="50" y2="99" />
@@ -414,21 +409,21 @@
         else { setRot(s.rot); setTimeout(step, 70); }
       }
 
-      // INTRO: globo aparece -> vira o círculo laranja -> MULT surge -> segue a sequência
-      setTimeout(function () {            // 1) o globo aparece (animado)
+      // INTRO: globo aparece e gira -> laranja preenche o globo de dentro -> MULT surge -> sequência
+      setTimeout(function () {            // 1) o globo aparece (desenha na tela + gira)
         globe.style.opacity = '1';
         globe.style.transform = 'scale(1)';
-      }, 120);
-      setTimeout(function () {            // 2) o globo se transforma no círculo laranja (crossfade)
+      }, 150);
+      setTimeout(function () {            // 2) o laranja preenche o globo (cresce do centro); o wireframe some
         badge.style.opacity = '1';
         badge.style.transform = 'scale(1)';
         globe.style.opacity = '0';
-        globe.style.transform = 'scale(1.15)';
-      }, 1150);
+        globe.style.transform = 'scale(1.05)';
+      }, 1900);
       setTimeout(function () {            // 3) o "MULT" surge no círculo
         word.style.opacity = '1';
-      }, 1750);
-      setTimeout(step, 2200);            // 4) segue: círculo -> quadrado -> ... -> quadrado final + pulso
+      }, 2550);
+      setTimeout(step, 2950);            // 4) segue: círculo -> quadrado -> ... -> quadrado final + halo
     })();
 
     /* Iguala a altura das maiúsculas do "EM" (Apple Garamond) à do "BREVE" (Druk),
