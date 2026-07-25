@@ -125,19 +125,31 @@
       transition: transform 0.55s cubic-bezier(.5, 0, .2, 1);
       will-change: transform;
     }
+    /* globo inicial (wireframe) — aparece e depois vira o círculo laranja */
+    .badge-globe {
+      position: absolute; inset: 0; z-index: 2;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; transform: scale(0.7);
+      transition: opacity 0.55s ease, transform 0.6s cubic-bezier(.2, .8, .2, 1);
+      pointer-events: none;
+    }
+    .badge-globe svg { width: 100%; height: 100%; display: block; }
+    .badge-globe .gspin { transform-box: fill-box; transform-origin: center; }
     .badge {
       position: relative; overflow: hidden;
       background: var(--orange);
       width: clamp(136px, 42vw, 232px);
       height: clamp(136px, 42vw, 232px);
       display: flex; align-items: center; justify-content: center;
-      border-radius: 0;
-      transition: border-radius 0.55s cubic-bezier(.5, 0, .2, 1);
+      border-radius: 50%;                 /* começa como círculo */
+      opacity: 0; transform: scale(0.7);  /* escondido até o globo virar círculo */
+      transition: border-radius 0.55s cubic-bezier(.5, 0, .2, 1),
+                  opacity 0.5s ease, transform 0.5s cubic-bezier(.2, .8, .2, 1);
     }
     .badge .wordmark {
       width: 71%; height: auto; display: block; position: relative; z-index: 1;
-      transform-origin: center;
-      transition: transform 0.55s cubic-bezier(.5, 0, .2, 1);
+      transform-origin: center; opacity: 0;
+      transition: transform 0.55s cubic-bezier(.5, 0, .2, 1), opacity 0.5s ease;
     }
     /* eco/pulso: contornos finos ancorados ao centro do quadrado */
     .pulse {
@@ -210,8 +222,7 @@
       /* o wordmark MULT. fica ancorado no centro desde o inicio,
          revelado pelas formas enquanto elas se transformam (sem delay) */
 
-      /* entrada da logo: aparece/carrega (não fica pronta de cara) */
-      body:not(.ready) .badge-glow { animation: badgeIn 0.6s cubic-bezier(.2,.8,.2,1) both; }
+      /* a entrada da logo (globo -> círculo -> MULT) é controlada via JS */
 
       /* contínuas — só depois que a logo assenta no quadrado */
       body.ready .badge-glow { animation: float 6.5s ease-in-out infinite, glow 4.5s ease-in-out infinite; }
@@ -226,12 +237,12 @@
       /* ambientes */
       .glow-bg { animation: breathe 7s ease-in-out infinite; }
       .globe .spin { animation: globe 9s linear infinite; }
+      .badge-globe .gspin { animation: globe 8s linear infinite; }
 
       /* letras do EM BREVE: surgem com foco (escalonado só na ENTRADA — não altera alinhamento) */
       .ltr, .cursor { animation: letterIn 0.6s ease both calc(1.9s + var(--i) * 0.06s); }
       .cursor { animation: letterIn 0.6s ease both calc(1.9s + var(--i) * 0.06s), blink 1.15s steps(1) infinite 3.2s; }
-      /* o "EM BREVE" flutua SEMPRE EM CONJUNTO — EM e BREVE nunca perdem o alinhamento entre si */
-      .soon { animation: softFloat 5s ease-in-out infinite 3.4s; }
+      /* "EM BREVE" fica estático (sem flutuar) — o movimento é só o cursor "_" piscando */
     }
 
     @keyframes enterUp   { 0% { opacity: 0; transform: translateY(16px); } 100% { opacity: 1; transform: none; } }
@@ -305,6 +316,20 @@
     <div class="badge-tilt">
       <div class="badge-glow">
         <div class="pulse" aria-hidden="true"><span></span><span></span><span></span></div>
+        <div class="badge-globe" aria-hidden="true">
+          <svg viewBox="0 0 100 100">
+            <g fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round">
+              <circle cx="50" cy="50" r="49" />
+              <g class="gspin">
+                <line x1="50" y1="1" x2="50" y2="99" />
+                <ellipse cx="50" cy="50" rx="24.5" ry="49" />
+              </g>
+              <line x1="1" y1="50" x2="99" y2="50" />
+              <line x1="8" y1="26" x2="92" y2="26" />
+              <line x1="8" y1="74" x2="92" y2="74" />
+            </g>
+          </svg>
+        </div>
         <div class="badge-rot">
           <div class="badge">
             <svg class="wordmark" viewBox="0 0 320 84" role="img" aria-label="MULT.">
@@ -347,21 +372,21 @@
       var body = document.body;
 
       var rot = document.querySelector('.badge-rot');
+      var globe = document.querySelector('.badge-globe');
 
-      // Sequência: {br} anima o border-radius (círculo<->quadrado, SUAVE);
-      // {rot} gira INSTANTÂNEO — só acontece no círculo, então é imperceptível
-      // (um círculo girado é idêntico). O quadrado/losango nunca gira à vista do usuário.
+      // Sequência de formas: {br} anima o border-radius (círculo<->quadrado, SUAVE);
+      // {rot} gira INSTANTÂNEO — só no círculo, imperceptível. O quadrado/losango nunca gira à vista.
       var seq = [
         { br: '0px' },   // círculo -> quadrado reto
         { br: '50%' },   // -> círculo
         { rot: 45 },     // gira 45° instantâneo (invisível: está em círculo)
-        { br: '0px' },   // círculo -> losango (surge já girado, sem giro visível)
+        { br: '0px' },   // círculo -> losango
         { br: '50%' },   // -> círculo
-        { rot: 0 },      // volta a 0° instantâneo (invisível)
+        { rot: 0 },      // volta a 0° instantâneo
         { br: '0px' }    // círculo -> quadrado final reto
       ];
 
-      // gira sem transição (instantâneo) — o MULT contra-gira junto pra ficar sempre reto
+      // gira sem transição — o MULT contra-gira junto pra ficar sempre reto
       function setRot(deg) {
         rot.style.transition = word.style.transition = 'none';
         rot.style.transform = 'rotate(' + deg + 'deg)';
@@ -370,26 +395,40 @@
         rot.style.transition = word.style.transition = '';
       }
 
-      if (reduce) { badge.style.borderRadius = '0'; setRot(0); body.classList.add('ready'); return; }
-
-      // estado inicial: círculo em 0°, sem animar
-      badge.style.transition = 'none';
       setRot(0);
-      badge.style.borderRadius = '50%';
-      void badge.offsetWidth;
-      badge.style.transition = '';
 
+      if (reduce) {
+        globe.style.opacity = '0';
+        badge.style.opacity = '1'; badge.style.transform = 'scale(1)'; badge.style.borderRadius = '0';
+        word.style.opacity = '1';
+        body.classList.add('ready');
+        return;
+      }
+
+      // roda a sequência de formas a partir do círculo atual
       var i = 0;
       function step() {
-        if (i >= seq.length) {
-          body.classList.add('ready');
-          return;
-        }
+        if (i >= seq.length) { body.classList.add('ready'); return; }
         var s = seq[i]; i++;
         if (s.br !== undefined) { badge.style.borderRadius = s.br; setTimeout(step, 560); }
-        else { setRot(s.rot); setTimeout(step, 70); } // giro instantâneo + micro-pausa imperceptível
+        else { setRot(s.rot); setTimeout(step, 70); }
       }
-      setTimeout(step, 700);
+
+      // INTRO: globo aparece -> vira o círculo laranja -> MULT surge -> segue a sequência
+      setTimeout(function () {            // 1) o globo aparece (animado)
+        globe.style.opacity = '1';
+        globe.style.transform = 'scale(1)';
+      }, 120);
+      setTimeout(function () {            // 2) o globo se transforma no círculo laranja (crossfade)
+        badge.style.opacity = '1';
+        badge.style.transform = 'scale(1)';
+        globe.style.opacity = '0';
+        globe.style.transform = 'scale(1.15)';
+      }, 1150);
+      setTimeout(function () {            // 3) o "MULT" surge no círculo
+        word.style.opacity = '1';
+      }, 1750);
+      setTimeout(step, 2200);            // 4) segue: círculo -> quadrado -> ... -> quadrado final + pulso
     })();
 
     /* Iguala a altura das maiúsculas do "EM" (Apple Garamond) à do "BREVE" (Druk),
