@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MULT. — Em breve</title>
+  <meta name="description" content="Igreja Mult — site em breve." />
+
+  <style>
+    @font-face {
+      font-family: 'Druk Wide';
+      src: url('assets/fonts/DrukWideBold.ttf') format('truetype');
+      font-weight: 700;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: 'Mono45';
+      src: url('assets/fonts/Mono45Headline-Regular.ttf') format('truetype');
+      font-weight: 400;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: 'Mono45 Light';
+      src: url('assets/fonts/Mono45Headline-Light.ttf') format('truetype');
+      font-weight: 300;
+      font-display: swap;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --ink: #ffffff;
+      --bg: #000000;
+    }
+
+    html, body { height: 100%; }
+
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: 'Mono45', monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      min-height: 100svh;
+      padding: 32px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* moldura fina, no estilo da marca */
+    .frame {
+      position: fixed;
+      inset: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      pointer-events: none;
+    }
+
+    .stage {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: clamp(28px, 5vw, 52px);
+      text-align: center;
+      z-index: 1;
+    }
+
+    .logo {
+      width: min(620px, 84vw);
+      height: auto;
+      display: block;
+    }
+    .logo text { font-family: 'Druk Wide', sans-serif; }
+
+    .soon {
+      font-family: 'Mono45', monospace;
+      text-transform: uppercase;
+      letter-spacing: 0.42em;
+      font-size: clamp(14px, 2.4vw, 22px);
+      /* compensa o espaçamento à direita para manter centralizado */
+      padding-left: 0.42em;
+      color: var(--ink);
+      display: inline-flex;
+      align-items: baseline;
+    }
+    .cursor {
+      display: inline-block;
+      width: 0.62em;
+      margin-left: 0.16em;
+      border-bottom: 0.14em solid var(--ink);
+      animation: blink 1.15s steps(1) infinite;
+    }
+    @keyframes blink { 0%, 50% { opacity: 1; } 50.01%, 100% { opacity: 0; } }
+
+    .tagline {
+      position: fixed;
+      bottom: 40px;
+      left: 0;
+      right: 0;
+      text-align: center;
+      font-family: 'Mono45 Light', monospace;
+      text-transform: uppercase;
+      letter-spacing: 0.34em;
+      padding-left: 0.34em;
+      font-size: clamp(8px, 1.4vw, 11px);
+      color: rgba(255, 255, 255, 0.5);
+      line-height: 1.9;
+      padding-inline: 24px;
+      z-index: 1;
+    }
+
+    @media (max-width: 560px) {
+      .tagline { bottom: 34px; }
+      .frame { inset: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="frame"></div>
+
+  <main class="stage">
+    <!-- Logo MULT. recriada em SVG: oval + wordmark + globo wireframe -->
+    <svg class="logo" viewBox="0 0 525 220" role="img" aria-label="MULT.">
+      <g fill="none" stroke="#ffffff" stroke-width="8">
+        <!-- oval -->
+        <ellipse cx="180" cy="110" rx="176" ry="88" />
+        <!-- globo -->
+        <g>
+          <circle cx="420" cy="110" r="90" />
+          <line x1="420" y1="20" x2="420" y2="200" />
+          <ellipse cx="420" cy="110" rx="45" ry="90" />
+          <line x1="330" y1="110" x2="510" y2="110" />
+          <line x1="342" y1="65"  x2="498" y2="65" />
+          <line x1="342" y1="155" x2="498" y2="155" />
+        </g>
+      </g>
+      <!-- wordmark -->
+      <text x="150" y="112" text-anchor="middle" dominant-baseline="central"
+            textLength="280" lengthAdjust="spacingAndGlyphs"
+            fill="#ffffff" font-size="76">MULT.</text>
+    </svg>
+
+    <div class="soon">
+      Em breve
+      <span class="cursor" aria-hidden="true"></span>
+    </div>
+  </main>
+
+  <div class="tagline">
+    Fomos chamados para viver &amp; compartilhar<br />
+    a fé em Jesus de maneira autêntica
+  </div>
+</body>
+</html>
