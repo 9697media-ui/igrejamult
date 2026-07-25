@@ -107,14 +107,22 @@
     }
 
     .badge-tilt {
+      position: relative;
       perspective: 900px;
       transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
       transition: transform 0.25s ease-out;
       will-change: transform;
     }
     .badge-glow {
+      position: relative; z-index: 1;
       filter: drop-shadow(0 16px 44px rgba(250, 76, 0, 0.34));
       will-change: transform, filter;
+    }
+    .badge-rot {
+      display: inline-block;
+      transform-origin: center;
+      transition: transform 0.55s cubic-bezier(.5, 0, .2, 1);
+      will-change: transform;
     }
     .badge {
       position: relative; overflow: hidden;
@@ -123,11 +131,20 @@
       height: clamp(136px, 42vw, 232px);
       display: flex; align-items: center; justify-content: center;
       border-radius: 0;
-      transition: width 0.6s cubic-bezier(.5, 0, .2, 1),
-                  height 0.6s cubic-bezier(.5, 0, .2, 1),
-                  border-radius 0.6s cubic-bezier(.5, 0, .2, 1);
+      transition: border-radius 0.55s cubic-bezier(.5, 0, .2, 1);
     }
-    .badge .wordmark { width: 62%; height: auto; display: block; position: relative; z-index: 1; }
+    .badge .wordmark {
+      width: 71%; height: auto; display: block; position: relative; z-index: 1;
+      transform-origin: center;
+      transition: transform 0.55s cubic-bezier(.5, 0, .2, 1);
+    }
+    /* eco/pulso ao finalizar: contornos finos que expandem e somem */
+    .pulse { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+    .pulse span {
+      position: absolute; inset: 0;
+      border: 1.5px solid var(--orange);
+      border-radius: 3px; opacity: 0;
+    }
     .wordmark text { font-family: 'Druk Wide', sans-serif; }
     /* reflexo de luz que atravessa a logo */
     .shine {
@@ -196,6 +213,11 @@
       body.ready .badge-glow { animation: float 6.5s ease-in-out infinite, glow 4.5s ease-in-out infinite; }
       body.ready .shine { animation: shine 6.5s ease-in-out infinite 1.4s; }
 
+      /* eco/pulso em repetição (laranja -> opacidade zero) */
+      body.ready .pulse span { animation: echo 2.6s ease-out infinite; }
+      body.ready .pulse span:nth-child(2) { animation-delay: 0.87s; }
+      body.ready .pulse span:nth-child(3) { animation-delay: 1.74s; }
+
       /* ambientes */
       .glow-bg { animation: breathe 7s ease-in-out infinite; }
       .globe .spin { animation: globe 9s linear infinite; }
@@ -228,6 +250,11 @@
     }
     @keyframes blink { 0%,50% { opacity: 1; } 50.01%,100% { opacity: 0; } }
     @keyframes globe { to { transform: rotate(360deg); } }
+    @keyframes echo {
+      0%   { transform: scale(1);   opacity: 0.5; }
+      70%  { opacity: 0.12; }
+      100% { transform: scale(1.9); opacity: 0; }
+    }
   </style>
 </head>
 <body>
@@ -264,14 +291,17 @@
   <main class="stage">
     <!-- Logo oficial: wordmark MULT. (Druk Wide Bold) branco sobre laranja -->
     <div class="badge-tilt">
+      <div class="pulse" aria-hidden="true"><span></span><span></span><span></span></div>
       <div class="badge-glow">
-        <div class="badge">
-          <svg class="wordmark" viewBox="0 0 320 84" role="img" aria-label="MULT.">
-            <text x="160" y="45" text-anchor="middle" dominant-baseline="central"
-                  textLength="300" lengthAdjust="spacingAndGlyphs"
-                  font-size="66" fill="#ffffff">MULT.</text>
-          </svg>
-          <div class="shine" aria-hidden="true"></div>
+        <div class="badge-rot">
+          <div class="badge">
+            <svg class="wordmark" viewBox="0 0 320 84" role="img" aria-label="MULT.">
+              <text x="160" y="45" text-anchor="middle" dominant-baseline="central"
+                    textLength="300" lengthAdjust="spacingAndGlyphs"
+                    font-size="66" fill="#ffffff">MULT.</text>
+            </svg>
+            <div class="shine" aria-hidden="true"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -304,45 +334,39 @@
       var word = document.querySelector('.wordmark');
       var body = document.body;
 
-      // estados [largura, altura, raio] — só círculo, retângulo (horizontal, combina com o MULT) e quadrado
+      var rot = document.querySelector('.badge-rot');
+
+      // estados [border-radius, rotação°] — só círculo <-> quadrado (direto), com um quadrado a 45°
       var states = [
-        [1.00, 1.00, '50%'],  // círculo perfeito
-        [1.00, 1.00, '34%'],  // squircle (quadrado bem arredondado)
-        [1.32, 0.82, '24%'],  // retângulo horizontal arredondado
-        [1.00, 1.00, '16%'],  // quadrado arredondado
-        [1.00, 1.00, '0px']   // quadrado padrão (final)
+        ['50%', 0],   // 1. círculo (início)
+        ['0px', 0],   // 2. quadrado (direto)
+        ['50%', 0],   // 3. volta ao círculo
+        ['0px', 45],  // 4. quadrado girado 45° (losango)
+        ['50%', 45],  // 5. volta ao círculo
+        ['0px', 90]   // 6. quadrado final (reto)
       ];
 
-      var S = Math.round(badge.getBoundingClientRect().width) || 216;
-      word.style.width = Math.round(S * 0.62) + 'px'; // MULT ancorado (tamanho fixo durante o morph)
-
       function apply(s) {
-        badge.style.width = (S * s[0]) + 'px';
-        badge.style.height = (S * s[1]) + 'px';
-        badge.style.borderRadius = s[2];
-      }
-      function finish() {
-        // volta ao quadrado responsivo (limpa os valores fixos em px)
-        badge.style.width = ''; badge.style.height = ''; badge.style.borderRadius = '0';
-        word.style.width = '';
-        body.classList.add('ready');
+        badge.style.borderRadius = s[0];
+        rot.style.transform = 'rotate(' + s[1] + 'deg)';
+        word.style.transform = 'rotate(' + (-s[1]) + 'deg)'; // MULT sempre reto (contra-rotação)
       }
 
-      if (reduce) { finish(); return; }
+      if (reduce) { apply(['0px', 0]); body.classList.add('ready'); return; }
 
-      // começa como círculo perfeito, sem animar a partir do estado inicial
-      badge.style.transition = 'none';
+      // começa como círculo, sem animar a partir do estado inicial
+      badge.style.transition = rot.style.transition = word.style.transition = 'none';
       apply(states[0]);
       void badge.offsetWidth;
-      badge.style.transition = '';
+      badge.style.transition = rot.style.transition = word.style.transition = '';
 
       var i = 0;
       function step() {
         i++;
-        if (i < states.length) { apply(states[i]); setTimeout(step, 640); }
-        else { finish(); }
+        if (i < states.length) { apply(states[i]); setTimeout(step, 560); }
+        else { body.classList.add('ready'); }
       }
-      setTimeout(step, 720);
+      setTimeout(step, 700);
     })();
 
     /* Iguala a altura das maiúsculas do "EM" (Apple Garamond) à do "BREVE" (Druk),
