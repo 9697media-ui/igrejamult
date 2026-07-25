@@ -148,7 +148,7 @@
                   opacity 0.4s ease, transform 0.7s cubic-bezier(.3, .9, .3, 1);
     }
     .badge .wordmark {
-      width: 88%; height: auto; display: block; position: relative; z-index: 1;
+      position: absolute; inset: 0; width: 100%; height: 100%; display: block; z-index: 1;
       transform-origin: center; opacity: 0;
       transition: transform 0.55s cubic-bezier(.5, 0, .2, 1), opacity 0.5s ease;
     }
@@ -327,13 +327,12 @@
         </div>
         <div class="badge-rot">
           <div class="badge">
-            <!-- wordmark 100% estático (sem JS/getBBox) para renderizar igual em todo navegador:
-                 textLength fixa a largura do "MULT"; o ponto é um <rect> quadrado com coords fixas.
-                 Métricas (font 66): MULT=268.16, cap=49.17, ponto=barra do T=13.55, base y=66. -->
-            <svg class="wordmark" viewBox="0 13.88 273.54 55.07" role="img" aria-label="MULT.">
-              <text class="wm-text" x="0" y="66" text-anchor="start" font-size="66"
-                    textLength="268.16" lengthAdjust="spacingAndGlyphs" fill="#ffffff">MULT</text>
-              <rect class="wm-dot" x="256.82" y="52.45" width="13.55" height="13.55" fill="#ffffff" />
+            <!-- Wordmark = PATH VETORIAL oficial (Mult 1x1.svg): MULT + ponto já enquadrados no
+                 quadrado (viewBox 461x461). Path não depende de fonte/medição -> renderiza IGUAL
+                 em Chrome, Safari, iOS. Preenche o badge, então o padding oficial vem embutido. -->
+            <svg class="wordmark" viewBox="0 0 461.46 461.43" role="img" aria-label="MULT.">
+              <path fill="#ffffff" d="M32.79,196.94h38.56l22.54,41.33,22.94-41.33h36.98v73.56h-27.78v-45.88l-25.81,45.88h-14.34l-25.71-45.88v45.88h-27.39v-73.56ZM164.77,196.94h28.18v32.93c0,9,3.96,19.78,22.54,19.78s22.45-10.78,22.45-19.78v-32.93h28.08v35.1c0,14.24-6.72,39.65-48.45,39.65h-3.96c-42.81,0-48.85-25.41-48.85-39.65v-35.1ZM304.91,196.94v52.5h51.02v21.06h-79.1v-73.56h28.08ZM366.41,270.51v-53.49h-31.74v-20.07h91.56v20.07h-31.74v53.49h-28.08Z"/>
+              <rect fill="#ffffff" x="411.22" y="249.25" width="21.11" height="21.48"/>
             </svg>
             <div class="shine" aria-hidden="true"></div>
           </div>
