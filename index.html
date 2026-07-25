@@ -12,20 +12,17 @@
     @font-face {
       font-family: 'Druk Wide';
       src: url('assets/fonts/DrukWideBold.ttf') format('truetype');
-      font-weight: 700;
-      font-display: swap;
+      font-weight: 700; font-display: swap;
     }
     @font-face {
       font-family: 'Mono45';
       src: url('assets/fonts/Mono45Headline-Regular.ttf') format('truetype');
-      font-weight: 400;
-      font-display: swap;
+      font-weight: 400; font-display: swap;
     }
     @font-face {
       font-family: 'Mono45 Light';
       src: url('assets/fonts/Mono45Headline-Light.ttf') format('truetype');
-      font-weight: 300;
-      font-display: swap;
+      font-weight: 300; font-display: swap;
     }
 
     :root {
@@ -35,6 +32,8 @@
       --muted: rgba(255, 255, 255, 0.46);
       --line: rgba(255, 255, 255, 0.18);
       --pad: clamp(22px, 4vw, 46px);
+      --mx: 0; /* parallax do mouse -0.5..0.5 */
+      --my: 0;
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -44,8 +43,7 @@
       background: var(--bg);
       color: var(--ink);
       font-family: 'Mono45', monospace;
-      min-height: 100vh;
-      min-height: 100svh;
+      min-height: 100vh; min-height: 100svh;
       display: grid;
       grid-template-rows: auto 1fr auto;
       padding: var(--pad);
@@ -53,126 +51,172 @@
       overflow: hidden;
     }
 
+    /* brilho laranja de fundo, atrás da logo */
+    .glow-bg {
+      position: fixed;
+      left: 50%; top: 50%;
+      width: min(120vw, 900px); height: min(120vw, 900px);
+      transform: translate(-50%, -50%);
+      background: radial-gradient(circle, rgba(250, 76, 0, 0.28) 0%, rgba(250, 76, 0, 0.10) 32%, transparent 62%);
+      filter: blur(24px);
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.9;
+    }
+
     /* moldura fina — estilo apresentação Mult */
     .frame {
-      position: fixed;
-      inset: 16px;
+      position: fixed; inset: 16px;
       border: 1px solid var(--line);
-      pointer-events: none;
-      z-index: 3;
+      pointer-events: none; z-index: 4;
     }
 
     /* ---------- CABEÇALHO ---------- */
     .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 20px;
-      padding-bottom: 16px;
+      display: flex; justify-content: space-between; align-items: flex-start;
+      gap: 20px; padding-bottom: 16px;
       border-bottom: 1px solid var(--line);
-      z-index: 2;
+      position: relative; z-index: 2;
     }
     .brand { display: flex; align-items: center; gap: 14px; }
     .globe { width: clamp(30px, 3.4vw, 40px); height: auto; flex: none; }
+    .globe .spin { transform-box: fill-box; transform-origin: center; }
     .tagline {
-      font-family: 'Mono45', monospace;
-      text-transform: uppercase;
-      letter-spacing: 0.22em;
-      font-size: clamp(7.5px, 1.05vw, 10.5px);
-      line-height: 1.75;
-      color: var(--ink);
+      font-family: 'Mono45', monospace; text-transform: uppercase;
+      letter-spacing: 0.22em; font-size: clamp(7.5px, 1.05vw, 10.5px);
+      line-height: 1.75; color: var(--ink);
     }
     .meta {
-      text-align: right;
-      font-family: 'Mono45', monospace;
-      text-transform: uppercase;
-      letter-spacing: 0.28em;
-      font-size: clamp(7.5px, 1.05vw, 10.5px);
-      line-height: 1.9;
-      color: var(--muted);
-      padding-left: 0.28em;
+      text-align: right; font-family: 'Mono45', monospace; text-transform: uppercase;
+      letter-spacing: 0.28em; font-size: clamp(7.5px, 1.05vw, 10.5px);
+      line-height: 1.9; color: var(--muted); padding-left: 0.28em;
     }
     .meta b { color: var(--ink); font-weight: 400; }
+    .meta .dot { color: var(--orange); }
 
     /* ---------- CENTRO ---------- */
     .stage {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: clamp(26px, 4.5vw, 44px);
-      text-align: center;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: clamp(26px, 4.5vw, 44px); text-align: center;
+      position: relative; z-index: 1;
     }
 
+    .badge-tilt {
+      perspective: 900px;
+      transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+      transition: transform 0.25s ease-out;
+      will-change: transform;
+    }
     .badge {
+      position: relative; overflow: hidden;
       background: var(--orange);
-      width: clamp(168px, 24vw, 232px);
-      aspect-ratio: 1 / 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 24px 80px rgba(250, 76, 0, 0.22);
+      width: clamp(168px, 24vw, 232px); aspect-ratio: 1 / 1;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 22px 70px rgba(250, 76, 0, 0.28);
     }
-    .badge .wordmark { width: 66%; height: auto; display: block; }
+    .badge .wordmark { width: 66%; height: auto; display: block; position: relative; z-index: 1; }
     .wordmark text { font-family: 'Druk Wide', sans-serif; }
+    /* reflexo de luz que atravessa a logo */
+    .shine {
+      position: absolute; inset: -40%;
+      background: linear-gradient(115deg, transparent 38%, rgba(255,255,255,0.45) 50%, transparent 62%);
+      transform: translateX(-120%);
+      z-index: 2; pointer-events: none;
+    }
 
-    .soon-wrap { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+    .soon-wrap { display: flex; flex-direction: column; align-items: center; gap: 14px; position: relative; z-index: 1; }
     .soon {
-      font-family: 'Druk Wide', sans-serif;
-      text-transform: uppercase;
-      font-size: clamp(30px, 7vw, 68px);
-      line-height: 0.98;
-      letter-spacing: 0.01em;
-      color: var(--ink);
-      display: inline-flex;
-      align-items: center;
-      gap: 0.16em;
+      font-family: 'Druk Wide', sans-serif; text-transform: uppercase;
+      font-size: clamp(30px, 7vw, 68px); line-height: 0.98; letter-spacing: 0.01em;
+      color: var(--ink); display: inline-flex; align-items: center; gap: 0.16em;
     }
-    /* palavra vazada — detalhe da marca */
-    .soon .hollow {
-      color: transparent;
-      -webkit-text-stroke: 2px var(--ink);
-      text-stroke: 2px var(--ink);
+    .soon .w { display: inline-block; }
+    /* palavra vazada com varredura laranja */
+    .soon .brv {
+      position: relative; color: transparent;
+      -webkit-text-stroke: 2px var(--ink); text-stroke: 2px var(--ink);
     }
-    .soon .dash {
-      color: var(--orange);
-      -webkit-text-stroke: 0;
+    .soon .brv::after {
+      content: attr(data-text); position: absolute; left: 0; top: 0;
+      color: var(--orange); -webkit-text-stroke: 0; text-stroke: 0;
+      clip-path: inset(0 100% 0 0);
     }
+    .soon .dash { color: var(--orange); -webkit-text-stroke: 0; }
     .label {
-      font-family: 'Mono45', monospace;
-      text-transform: uppercase;
-      letter-spacing: 0.42em;
-      padding-left: 0.42em;
-      font-size: clamp(9px, 1.5vw, 12px);
-      color: var(--muted);
+      font-family: 'Mono45', monospace; text-transform: uppercase;
+      letter-spacing: 0.42em; padding-left: 0.42em;
+      font-size: clamp(9px, 1.5vw, 12px); color: var(--muted);
     }
 
     /* ---------- RODAPÉ ---------- */
     .footer {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
-      gap: 20px;
-      padding-top: 16px;
-      border-top: 1px solid var(--line);
-      font-family: 'Mono45 Light', monospace;
-      text-transform: uppercase;
-      letter-spacing: 0.26em;
-      font-size: clamp(7.5px, 1.05vw, 10.5px);
-      color: var(--muted);
-      z-index: 2;
+      display: flex; justify-content: space-between; align-items: flex-end; gap: 20px;
+      padding-top: 16px; border-top: 1px solid var(--line);
+      font-family: 'Mono45 Light', monospace; text-transform: uppercase;
+      letter-spacing: 0.26em; font-size: clamp(7.5px, 1.05vw, 10.5px);
+      color: var(--muted); position: relative; z-index: 2;
     }
     .footer .accent { color: var(--orange); }
 
     @media (max-width: 640px) {
       .frame { inset: 10px; }
       .tagline { letter-spacing: 0.16em; }
-      .meta .hide-sm { display: none; }
-      .footer .hide-sm { display: none; }
+      .meta .hide-sm, .footer .hide-sm { display: none; }
     }
+
+    /* =========================================================
+       ANIMAÇÕES (desativadas para quem prefere menos movimento)
+       ========================================================= */
+    @media (prefers-reduced-motion: no-preference) {
+      /* entradas */
+      .header   { animation: enterDown 0.8s cubic-bezier(.2,.7,.2,1) both 0.05s; }
+      .footer   { animation: enterUp   0.8s cubic-bezier(.2,.7,.2,1) both 0.15s; }
+      .badge-tilt { animation: pop 0.9s cubic-bezier(.2,.8,.2,1) both 0.25s; }
+      .soon .em  { animation: enterUp 0.7s cubic-bezier(.2,.7,.2,1) both 0.45s; }
+      .soon .brv { animation: enterUp 0.7s cubic-bezier(.2,.7,.2,1) both 0.55s; }
+      .soon .dash{ animation: enterUp 0.7s cubic-bezier(.2,.7,.2,1) both 0.65s, blink 1.15s steps(1) infinite 1.4s; }
+      .label     { animation: enterUp 0.7s cubic-bezier(.2,.7,.2,1) both 0.8s; }
+
+      /* contínuas (começam após a entrada) */
+      .badge  { animation: float 6.5s ease-in-out infinite 1s, glow 4.5s ease-in-out infinite 1s; }
+      .shine  { animation: shine 6s ease-in-out infinite 2s; }
+      .glow-bg{ animation: breathe 7s ease-in-out infinite; }
+      .soon .brv::after { animation: sweep 5s ease-in-out infinite 1.6s; }
+      .globe .spin { animation: globe 9s linear infinite; }
+    }
+
+    @keyframes enterUp   { 0% { opacity: 0; transform: translateY(16px); } 100% { opacity: 1; transform: none; } }
+    @keyframes enterDown { 0% { opacity: 0; transform: translateY(-16px); } 100% { opacity: 1; transform: none; } }
+    @keyframes pop {
+      0%   { opacity: 0; transform: perspective(900px) scale(0.8) rotateX(8deg); }
+      60%  { opacity: 1; transform: perspective(900px) scale(1.03); }
+      100% { opacity: 1; transform: perspective(900px) scale(1); }
+    }
+    @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+    @keyframes glow {
+      0%,100% { box-shadow: 0 20px 60px rgba(250,76,0,0.24); }
+      50%     { box-shadow: 0 26px 96px rgba(250,76,0,0.48); }
+    }
+    @keyframes shine {
+      0%   { transform: translateX(-120%); }
+      18%  { transform: translateX(120%); }
+      100% { transform: translateX(120%); }
+    }
+    @keyframes breathe {
+      0%,100% { opacity: 0.7; transform: translate(-50%, -50%) scale(0.94); }
+      50%     { opacity: 1;   transform: translate(-50%, -50%) scale(1.06); }
+    }
+    @keyframes sweep {
+      0%,8%    { clip-path: inset(0 100% 0 0); }
+      42%,58%  { clip-path: inset(0 0 0 0); }
+      92%,100% { clip-path: inset(0 0 0 100%); }
+    }
+    @keyframes blink { 0%,50% { opacity: 1; } 50.01%,100% { opacity: 0; } }
+    @keyframes globe { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
+  <div class="glow-bg"></div>
   <div class="frame"></div>
 
   <!-- CABEÇALHO -->
@@ -181,8 +225,10 @@
       <svg class="globe" viewBox="0 0 100 100" role="img" aria-label="Mult">
         <g fill="none" stroke="#ffffff" stroke-width="4">
           <circle cx="50" cy="50" r="46" />
-          <line x1="50" y1="4" x2="50" y2="96" />
-          <ellipse cx="50" cy="50" rx="23" ry="46" />
+          <g class="spin">
+            <line x1="50" y1="4" x2="50" y2="96" />
+            <ellipse cx="50" cy="50" rx="23" ry="46" />
+          </g>
           <line x1="4" y1="50" x2="96" y2="50" />
           <line x1="11" y1="27" x2="89" y2="27" />
           <line x1="11" y1="73" x2="89" y2="73" />
@@ -195,25 +241,28 @@
     </div>
     <div class="meta">
       <span class="hide-sm">Site oficial da Mult<br /></span>
-      <b>Em breve</b> — 2026
+      <b>Em breve</b> <span class="dot">·</span> 2026
     </div>
   </header>
 
   <!-- CENTRO -->
   <main class="stage">
     <!-- Logo oficial: wordmark MULT. (Druk Wide Bold) branco sobre laranja -->
-    <div class="badge">
-      <svg class="wordmark" viewBox="0 0 320 84" role="img" aria-label="MULT.">
-        <text x="160" y="45" text-anchor="middle" dominant-baseline="central"
-              textLength="300" lengthAdjust="spacingAndGlyphs"
-              font-size="66" fill="#ffffff">MULT.</text>
-      </svg>
+    <div class="badge-tilt">
+      <div class="badge">
+        <svg class="wordmark" viewBox="0 0 320 84" role="img" aria-label="MULT.">
+          <text x="160" y="45" text-anchor="middle" dominant-baseline="central"
+                textLength="300" lengthAdjust="spacingAndGlyphs"
+                font-size="66" fill="#ffffff">MULT.</text>
+        </svg>
+        <div class="shine" aria-hidden="true"></div>
+      </div>
     </div>
 
     <div class="soon-wrap">
-      <div class="soon">
-        <span>Em</span><span class="hollow">Breve</span><span class="dash">_</span>
-      </div>
+      <h1 class="soon">
+        <span class="w em">Em</span><span class="w brv" data-text="Breve">Breve</span><span class="w dash">_</span>
+      </h1>
       <div class="label">Estamos construindo algo novo</div>
     </div>
   </main>
@@ -224,5 +273,39 @@
     <div class="hide-sm">Projeto de plantação</div>
     <div><span class="accent">///</span> Em construção</div>
   </footer>
+
+  <script>
+    // Parallax 3D da logo seguindo o cursor + brilho de fundo reagindo ao mouse
+    (function () {
+      var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (reduce) return;
+
+      var tilt = document.querySelector('.badge-tilt');
+      var glow = document.querySelector('.glow-bg');
+      var raf = null, tx = 0, ty = 0;
+
+      function onMove(e) {
+        var w = window.innerWidth, h = window.innerHeight;
+        var px = (e.clientX / w) - 0.5;   // -0.5 .. 0.5
+        var py = (e.clientY / h) - 0.5;
+        if (raf) return;
+        raf = requestAnimationFrame(function () {
+          raf = null;
+          // tilt da logo (inverte eixos para dar sensação de profundidade)
+          tilt.style.setProperty('--ry', (px * 18).toFixed(2) + 'deg');
+          tilt.style.setProperty('--rx', (-py * 14).toFixed(2) + 'deg');
+          // brilho de fundo desloca levemente na direção do cursor
+          glow.style.transform = 'translate(calc(-50% + ' + (px * 60).toFixed(1) + 'px), calc(-50% + ' + (py * 60).toFixed(1) + 'px))';
+        });
+      }
+      function reset() {
+        tilt.style.setProperty('--ry', '0deg');
+        tilt.style.setProperty('--rx', '0deg');
+      }
+      window.addEventListener('pointermove', onMove, { passive: true });
+      window.addEventListener('pointerleave', reset);
+      window.addEventListener('blur', reset);
+    })();
+  </script>
 </body>
 </html>
