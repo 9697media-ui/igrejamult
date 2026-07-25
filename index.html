@@ -119,12 +119,15 @@
     .badge {
       position: relative; overflow: hidden;
       background: var(--orange);
-      width: clamp(168px, 24vw, 232px); aspect-ratio: 1 / 1;
+      width: clamp(168px, 24vw, 232px);
+      height: clamp(168px, 24vw, 232px);
       display: flex; align-items: center; justify-content: center;
-      transition: clip-path 0.4s cubic-bezier(.65, 0, .35, 1),
-                  -webkit-clip-path 0.4s cubic-bezier(.65, 0, .35, 1);
+      border-radius: 0;
+      transition: width 0.55s cubic-bezier(.7, 0, .2, 1),
+                  height 0.55s cubic-bezier(.7, 0, .2, 1),
+                  border-radius 0.55s cubic-bezier(.7, 0, .2, 1);
     }
-    .badge .wordmark { width: 66%; height: auto; display: block; position: relative; z-index: 1; }
+    .badge .wordmark { width: 62%; height: auto; display: block; position: relative; z-index: 1; }
     .wordmark text { font-family: 'Druk Wide', sans-serif; }
     /* reflexo de luz que atravessa a logo */
     .shine {
@@ -197,20 +200,18 @@
       .glow-bg { animation: breathe 7s ease-in-out infinite; }
       .globe .spin { animation: globe 9s linear infinite; }
 
-      /* letras do EM BREVE: surgem com foco + onda suave contínua */
-      .ltr, .cursor {
-        animation:
-          letterIn 0.6s ease both calc(1.9s + var(--i) * 0.06s),
-          wave 4.5s ease-in-out infinite calc(3.0s + var(--i) * 0.12s);
-      }
+      /* letras do EM BREVE: surgem com foco (escalonado só na ENTRADA — não altera alinhamento) */
+      .ltr, .cursor { animation: letterIn 0.6s ease both calc(1.9s + var(--i) * 0.06s); }
       .cursor { animation: letterIn 0.6s ease both calc(1.9s + var(--i) * 0.06s), blink 1.15s steps(1) infinite 3.2s; }
+      /* o "EM BREVE" flutua SEMPRE EM CONJUNTO — EM e BREVE nunca perdem o alinhamento entre si */
+      .soon { animation: softFloat 5s ease-in-out infinite 3.4s; }
     }
 
     @keyframes enterUp   { 0% { opacity: 0; transform: translateY(16px); } 100% { opacity: 1; transform: none; } }
     @keyframes enterDown { 0% { opacity: 0; transform: translateY(-16px); } 100% { opacity: 1; transform: none; } }
     @keyframes badgeIn   { 0% { opacity: 0; transform: scale(0.55); } 60% { opacity: 1; } 100% { opacity: 1; transform: none; } }
     @keyframes letterIn  { 0% { opacity: 0; filter: blur(7px); } 100% { opacity: 1; filter: blur(0); } }
-    @keyframes wave      { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
+    @keyframes softFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
     @keyframes float     { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
     @keyframes glow {
       0%,100% { filter: drop-shadow(0 16px 40px rgba(250,76,0,0.30)); }
@@ -300,88 +301,47 @@
     (function () {
       var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       var badge = document.querySelector('.badge');
+      var word = document.querySelector('.wordmark');
       var body = document.body;
 
-      /* ---- gerador de formas (todas com pontos suficientes p/ morph suave) ---- */
-      function fmt(n) { return Math.round(n * 100) / 100; }
-      function toClip(pts) {
-        return 'polygon(' + pts.map(function (p) { return fmt(p[0]) + '% ' + fmt(p[1]) + '%'; }).join(', ') + ')';
-      }
-      // polígono regular de n lados, começando no topo, sentido horário
-      function reg(n, rot) {
-        rot = rot || 0;
-        var arr = [];
-        for (var i = 0; i < n; i++) {
-          var a = (-90 + rot + i * 360 / n) * Math.PI / 180;
-          arr.push([50 + 50 * Math.cos(a), 50 + 50 * Math.sin(a)]);
-        }
-        return arr;
-      }
-      // estrela de p pontas (2p vértices)
-      function star(p, rOut, rIn, rot) {
-        rot = rot || 0;
-        var arr = [];
-        for (var i = 0; i < p * 2; i++) {
-          var r = (i % 2 === 0) ? rOut : rIn;
-          var a = (-90 + rot + i * 360 / (p * 2)) * Math.PI / 180;
-          arr.push([50 + r * Math.cos(a), 50 + r * Math.sin(a)]);
-        }
-        return arr;
-      }
-      // distribui os vértices de "corners" até somar 12 pontos (cantos nítidos, morph suave)
-      function expand(corners) {
-        var TOTAL = 72, N = corners.length;
-        if (N >= TOTAL) return corners.slice(0, TOTAL);
-        var edges = [], per = 0;
-        for (var i = 0; i < N; i++) {
-          var a = corners[i], b = corners[(i + 1) % N];
-          var len = Math.hypot(b[0] - a[0], b[1] - a[1]);
-          edges.push({ a: a, b: b, len: len }); per += len;
-        }
-        var extra = TOTAL - N;
-        var counts = edges.map(function (e) { return Math.floor(extra * e.len / per); });
-        var assigned = counts.reduce(function (s, c) { return s + c; }, 0);
-        var rema = edges.map(function (e, i) { return { i: i, frac: (extra * e.len / per) - counts[i] }; })
-                        .sort(function (x, y) { return y.frac - x.frac; });
-        var k = 0;
-        while (assigned < extra) { counts[rema[k % rema.length].i]++; assigned++; k++; }
-        var pts = [];
-        for (var j = 0; j < N; j++) {
-          var e = edges[j];
-          pts.push(e.a);
-          for (var m = 1; m <= counts[j]; m++) {
-            var t = m / (counts[j] + 1);
-            pts.push([e.a[0] + (e.b[0] - e.a[0]) * t, e.a[1] + (e.b[1] - e.a[1]) * t]);
-          }
-        }
-        return pts;
-      }
-
-      var shapes = [
-        toClip(reg(72)),                        // círculo perfeito (72 lados)
-        toClip(expand(reg(3))),                 // triângulo
-        toClip(expand(reg(5))),                 // pentágono
-        toClip(expand(reg(6))),                 // hexágono
-        toClip(expand(star(6, 50, 24))),        // estrela
-        toClip(expand(reg(4))),                 // losango
-        toClip(expand([[0,0],[100,0],[100,100],[0,100]])) // quadrado padrão (preenche a caixa)
+      // estados [largura, altura, raio] — variações só entre círculo, retângulos e quadrado
+      var states = [
+        [1.00, 1.00, '50%'],  // círculo perfeito
+        [1.00, 1.00, '30%'],  // squircle (quadrado bem arredondado)
+        [1.30, 0.80, '24%'],  // retângulo horizontal arredondado
+        [0.82, 1.16, '20%'],  // retângulo vertical arredondado
+        [1.00, 1.00, '12%'],  // quadrado arredondado
+        [1.00, 1.00, '0px']   // quadrado padrão (final)
       ];
 
-      function setClip(v) { badge.style.clipPath = v; badge.style.webkitClipPath = v; }
+      var S = Math.round(badge.getBoundingClientRect().width) || 216;
+      word.style.width = Math.round(S * 0.62) + 'px'; // MULT ancorado (tamanho fixo durante o morph)
 
-      if (reduce) { setClip(shapes[shapes.length - 1]); body.classList.add('ready'); return; }
+      function apply(s) {
+        badge.style.width = (S * s[0]) + 'px';
+        badge.style.height = (S * s[1]) + 'px';
+        badge.style.borderRadius = s[2];
+      }
+      function finish() {
+        // volta ao quadrado responsivo (limpa os valores fixos em px)
+        badge.style.width = ''; badge.style.height = ''; badge.style.borderRadius = '0';
+        word.style.width = '';
+        body.classList.add('ready');
+      }
 
-      // começa como círculo, sem animar a partir do estado inicial
+      if (reduce) { finish(); return; }
+
+      // começa como círculo perfeito, sem animar a partir do estado inicial
       badge.style.transition = 'none';
-      setClip(shapes[0]);
+      apply(states[0]);
       void badge.offsetWidth;
       badge.style.transition = '';
 
       var i = 0;
       function step() {
         i++;
-        if (i < shapes.length) { setClip(shapes[i]); setTimeout(step, 400); }
-        else { body.classList.add('ready'); }
+        if (i < states.length) { apply(states[i]); setTimeout(step, 520); }
+        else { finish(); }
       }
       setTimeout(step, 720);
     })();
