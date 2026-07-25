@@ -120,6 +120,7 @@
     }
     .badge-rot {
       display: inline-block;
+      position: relative; z-index: 1;
       transform-origin: center;
       transition: transform 0.55s cubic-bezier(.5, 0, .2, 1);
       will-change: transform;
@@ -138,18 +139,16 @@
       transform-origin: center;
       transition: transform 0.55s cubic-bezier(.5, 0, .2, 1);
     }
-    /* eco/pulso ao finalizar: contornos finos que expandem e somem */
+    /* eco/pulso: contornos finos ancorados ao centro do quadrado */
     .pulse {
       position: absolute; inset: 0; z-index: 0; pointer-events: none;
-      transition: opacity 0.6s ease;
+      opacity: 0;
     }
     .pulse span {
       position: absolute; inset: 0;
-      border: 1.5px solid var(--orange);
-      border-radius: 3px; opacity: 0;
+      border: 1px solid var(--orange);
+      border-radius: 1px; opacity: 0;
     }
-    /* depois de ~5s o pulso some e não volta mais */
-    body.pulse-off .pulse { opacity: 0; }
     .wordmark text { font-family: 'Druk Wide', sans-serif; }
     /* reflexo de luz que atravessa a logo */
     .shine {
@@ -218,7 +217,8 @@
       body.ready .badge-glow { animation: float 6.5s ease-in-out infinite, glow 4.5s ease-in-out infinite; }
       body.ready .shine { animation: shine 6.5s ease-in-out infinite 1.4s; }
 
-      /* eco/pulso em repetição (laranja -> opacidade zero) */
+      /* eco/pulso: anéis expandem em repetição; envelope = 3s fade-in + 3s normal + 3s fade-out */
+      body.ready .pulse { animation: pulseEnvelope 9s ease both; }
       body.ready .pulse span { animation: echo 2.6s ease-out infinite; }
       body.ready .pulse span:nth-child(2) { animation-delay: 0.87s; }
       body.ready .pulse span:nth-child(3) { animation-delay: 1.74s; }
@@ -260,6 +260,13 @@
       70%  { opacity: 0.12; }
       100% { transform: scale(1.5); opacity: 0; }
     }
+    /* envelope do pulso: 3s fade-in + 3s normal + 3s fade-out (9s, uma vez) */
+    @keyframes pulseEnvelope {
+      0%     { opacity: 0; }
+      33.33% { opacity: 1; }
+      66.66% { opacity: 1; }
+      100%   { opacity: 0; }
+    }
   </style>
 </head>
 <body>
@@ -296,8 +303,8 @@
   <main class="stage">
     <!-- Logo oficial: wordmark MULT. (Druk Wide Bold) branco sobre laranja -->
     <div class="badge-tilt">
-      <div class="pulse" aria-hidden="true"><span></span><span></span><span></span></div>
       <div class="badge-glow">
+        <div class="pulse" aria-hidden="true"><span></span><span></span><span></span></div>
         <div class="badge-rot">
           <div class="badge">
             <svg class="wordmark" viewBox="0 0 320 84" role="img" aria-label="MULT.">
@@ -376,8 +383,6 @@
       function step() {
         if (i >= seq.length) {
           body.classList.add('ready');
-          // o pulso roda por ~5s e depois some (não volta mais)
-          setTimeout(function () { body.classList.add('pulse-off'); }, 5000);
           return;
         }
         var s = seq[i]; i++;
