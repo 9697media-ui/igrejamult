@@ -84,7 +84,7 @@
       position: relative; z-index: 2;
     }
     .brand { display: flex; align-items: center; gap: 14px; }
-    .globe { width: clamp(30px, 3.4vw, 40px); height: auto; flex: none; }
+    .globe { width: clamp(26px, 6vw, 40px); height: auto; flex: none; }
     .globe .spin { transform-box: fill-box; transform-origin: center; }
     .tagline {
       font-family: 'Mono45', monospace; text-transform: uppercase;
@@ -119,13 +119,13 @@
     .badge {
       position: relative; overflow: hidden;
       background: var(--orange);
-      width: clamp(168px, 24vw, 232px);
-      height: clamp(168px, 24vw, 232px);
+      width: clamp(136px, 42vw, 232px);
+      height: clamp(136px, 42vw, 232px);
       display: flex; align-items: center; justify-content: center;
       border-radius: 0;
-      transition: width 0.55s cubic-bezier(.7, 0, .2, 1),
-                  height 0.55s cubic-bezier(.7, 0, .2, 1),
-                  border-radius 0.55s cubic-bezier(.7, 0, .2, 1);
+      transition: width 0.6s cubic-bezier(.5, 0, .2, 1),
+                  height 0.6s cubic-bezier(.5, 0, .2, 1),
+                  border-radius 0.6s cubic-bezier(.5, 0, .2, 1);
     }
     .badge .wordmark { width: 62%; height: auto; display: block; position: relative; z-index: 1; }
     .wordmark text { font-family: 'Druk Wide', sans-serif; }
@@ -141,7 +141,7 @@
     .soon-wrap { display: flex; flex-direction: column; align-items: center; gap: 14px; position: relative; z-index: 1; }
     .soon {
       font-family: 'Druk Wide', sans-serif; text-transform: uppercase;
-      font-size: clamp(30px, 7vw, 68px); line-height: 0.98; letter-spacing: 0.01em;
+      font-size: clamp(26px, 7.4vw, 68px); line-height: 0.98; letter-spacing: 0.01em;
       color: var(--ink); display: inline-flex; align-items: baseline;
     }
     .wgrp { display: inline-flex; align-items: baseline; }
@@ -304,13 +304,12 @@
       var word = document.querySelector('.wordmark');
       var body = document.body;
 
-      // estados [largura, altura, raio] — variações só entre círculo, retângulos e quadrado
+      // estados [largura, altura, raio] — só círculo, retângulo (horizontal, combina com o MULT) e quadrado
       var states = [
         [1.00, 1.00, '50%'],  // círculo perfeito
-        [1.00, 1.00, '30%'],  // squircle (quadrado bem arredondado)
-        [1.30, 0.80, '24%'],  // retângulo horizontal arredondado
-        [0.82, 1.16, '20%'],  // retângulo vertical arredondado
-        [1.00, 1.00, '12%'],  // quadrado arredondado
+        [1.00, 1.00, '34%'],  // squircle (quadrado bem arredondado)
+        [1.32, 0.82, '24%'],  // retângulo horizontal arredondado
+        [1.00, 1.00, '16%'],  // quadrado arredondado
         [1.00, 1.00, '0px']   // quadrado padrão (final)
       ];
 
@@ -340,7 +339,7 @@
       var i = 0;
       function step() {
         i++;
-        if (i < states.length) { apply(states[i]); setTimeout(step, 520); }
+        if (i < states.length) { apply(states[i]); setTimeout(step, 640); }
         else { finish(); }
       }
       setTimeout(step, 720);
