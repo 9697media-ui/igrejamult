@@ -435,24 +435,26 @@
         var dot = document.querySelector('.wm-dot');
         var g = document.querySelector('.wm-inner');
         if (!svg || !text || !dot || !g) return;
-        var tb = text.getBBox();               // OBS: getBBox devolve a CAIXA-EM (não a tinta)
+        var tb = text.getBBox();
         if (!tb.width) return;
-        var cap = tb.height * 0.592;           // altura REAL das maiúsculas (medida na fonte Druk)
-        // ponto = quadrado com ALTURA = espessura da barra superior do "T" (~0.275 do cap),
-        // alinhado à base e ENCAIXADO sob o braço direito do "T"
-        var side = cap * 0.275;
-        // linha de base REAL do texto (o atributo y do <text>), não o fundo da caixa-em
-        var baseline = parseFloat(text.getAttribute('y')) || (tb.y + cap);
-        var pRight = tb.x + tb.width + cap * 0.05;
+        // VERTICAL por MÉTRICA DA FONTE (o getBBox varia entre navegadores: Chrome devolve a
+        // caixa-em, Safari a caixa de tinta — por isso quebrava no mobile). font-size é fixo (66).
+        var fontSize = parseFloat(text.getAttribute('font-size')) || 66;
+        var baseline = parseFloat(text.getAttribute('y')) || 0; // linha de base = atributo y
+        var capH = fontSize * 0.745;           // altura real das maiúsculas (Druk Wide Bold)
+        var capTop = baseline - capH;
+        var side = capH * 0.2755;              // ponto = espessura da barra superior do "T"
+        // HORIZONTAL pelos limites do texto (posição do "T")
+        var pRight = tb.x + tb.width + capH * 0.05;
         dot.setAttribute('width', side.toFixed(2));
         dot.setAttribute('height', side.toFixed(2));
         dot.setAttribute('x', (pRight - side).toFixed(2));
-        dot.setAttribute('y', (baseline - side).toFixed(2));
+        dot.setAttribute('y', (baseline - side).toFixed(2)); // fundo do ponto na linha de base
         g.removeAttribute('transform');
-        // viewBox JUSTO ao conteúdo (MULT + ponto) — assim o wordmark preenche o SVG
-        // e a largura CSS controla o tamanho, deixando o padding previsível
         var totalW = pRight - tb.x;
-        svg.setAttribute('viewBox', tb.x.toFixed(2) + ' ' + tb.y.toFixed(2) + ' ' + totalW.toFixed(2) + ' ' + tb.height.toFixed(2));
+        var vm = capH * 0.06;                  // margem vertical (evita cortar overshoots)
+        // viewBox: horizontal pelo texto; vertical pela métrica da fonte (robusto entre navegadores)
+        svg.setAttribute('viewBox', tb.x.toFixed(2) + ' ' + (capTop - vm).toFixed(2) + ' ' + totalW.toFixed(2) + ' ' + (capH + 2 * vm).toFixed(2));
       }
       if (document.fonts && document.fonts.ready) { document.fonts.ready.then(layout); }
       else { window.addEventListener('load', layout); }
