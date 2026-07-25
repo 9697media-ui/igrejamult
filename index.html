@@ -102,7 +102,7 @@
     /* ---------- CENTRO ---------- */
     .stage {
       display: flex; flex-direction: column; align-items: center; justify-content: center;
-      gap: clamp(26px, 4.5vw, 44px); text-align: center;
+      gap: clamp(52px, 7vw, 78px); text-align: center;
       position: relative; z-index: 1;
     }
 
@@ -139,12 +139,17 @@
       transition: transform 0.55s cubic-bezier(.5, 0, .2, 1);
     }
     /* eco/pulso ao finalizar: contornos finos que expandem e somem */
-    .pulse { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+    .pulse {
+      position: absolute; inset: 0; z-index: 0; pointer-events: none;
+      transition: opacity 0.6s ease;
+    }
     .pulse span {
       position: absolute; inset: 0;
       border: 1.5px solid var(--orange);
       border-radius: 3px; opacity: 0;
     }
+    /* depois de ~5s o pulso some e não volta mais */
+    body.pulse-off .pulse { opacity: 0; }
     .wordmark text { font-family: 'Druk Wide', sans-serif; }
     /* reflexo de luz que atravessa a logo */
     .shine {
@@ -253,7 +258,7 @@
     @keyframes echo {
       0%   { transform: scale(1);   opacity: 0.5; }
       70%  { opacity: 0.12; }
-      100% { transform: scale(1.9); opacity: 0; }
+      100% { transform: scale(1.5); opacity: 0; }
     }
   </style>
 </head>
@@ -336,35 +341,48 @@
 
       var rot = document.querySelector('.badge-rot');
 
-      // estados [border-radius, rotação°] — só círculo <-> quadrado (direto), com um quadrado a 45°
-      var states = [
-        ['50%', 0],   // 1. círculo (início)
-        ['0px', 0],   // 2. quadrado (direto)
-        ['50%', 0],   // 3. volta ao círculo
-        ['0px', 45],  // 4. quadrado girado 45° (losango)
-        ['50%', 45],  // 5. volta ao círculo
-        ['0px', 90]   // 6. quadrado final (reto)
+      // Sequência: {br} anima o border-radius (círculo<->quadrado, SUAVE);
+      // {rot} gira INSTANTÂNEO — só acontece no círculo, então é imperceptível
+      // (um círculo girado é idêntico). O quadrado/losango nunca gira à vista do usuário.
+      var seq = [
+        { br: '0px' },   // círculo -> quadrado reto
+        { br: '50%' },   // -> círculo
+        { rot: 45 },     // gira 45° instantâneo (invisível: está em círculo)
+        { br: '0px' },   // círculo -> losango (surge já girado, sem giro visível)
+        { br: '50%' },   // -> círculo
+        { rot: 0 },      // volta a 0° instantâneo (invisível)
+        { br: '0px' }    // círculo -> quadrado final reto
       ];
 
-      function apply(s) {
-        badge.style.borderRadius = s[0];
-        rot.style.transform = 'rotate(' + s[1] + 'deg)';
-        word.style.transform = 'rotate(' + (-s[1]) + 'deg)'; // MULT sempre reto (contra-rotação)
+      // gira sem transição (instantâneo) — o MULT contra-gira junto pra ficar sempre reto
+      function setRot(deg) {
+        rot.style.transition = word.style.transition = 'none';
+        rot.style.transform = 'rotate(' + deg + 'deg)';
+        word.style.transform = 'rotate(' + (-deg) + 'deg)';
+        void rot.offsetWidth;
+        rot.style.transition = word.style.transition = '';
       }
 
-      if (reduce) { apply(['0px', 0]); body.classList.add('ready'); return; }
+      if (reduce) { badge.style.borderRadius = '0'; setRot(0); body.classList.add('ready'); return; }
 
-      // começa como círculo, sem animar a partir do estado inicial
-      badge.style.transition = rot.style.transition = word.style.transition = 'none';
-      apply(states[0]);
+      // estado inicial: círculo em 0°, sem animar
+      badge.style.transition = 'none';
+      setRot(0);
+      badge.style.borderRadius = '50%';
       void badge.offsetWidth;
-      badge.style.transition = rot.style.transition = word.style.transition = '';
+      badge.style.transition = '';
 
       var i = 0;
       function step() {
-        i++;
-        if (i < states.length) { apply(states[i]); setTimeout(step, 560); }
-        else { body.classList.add('ready'); }
+        if (i >= seq.length) {
+          body.classList.add('ready');
+          // o pulso roda por ~5s e depois some (não volta mais)
+          setTimeout(function () { body.classList.add('pulse-off'); }, 5000);
+          return;
+        }
+        var s = seq[i]; i++;
+        if (s.br !== undefined) { badge.style.borderRadius = s.br; setTimeout(step, 560); }
+        else { setRot(s.rot); setTimeout(step, 70); } // giro instantâneo + micro-pausa imperceptível
       }
       setTimeout(step, 700);
     })();
